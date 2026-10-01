@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin - Portal Cuti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F8; --surface:#FFFFFF; --border:#E2E5EA;
+    --text:#1F2430; --text-muted:#6B7280;
+    --accent:#146464; --accent-dark:#0E4B4B;
+    --warn-bg:#FCEFD3; --warn-text:#8A6116;
+    --danger-bg:#F7DEDA; --danger-text:#A23B2A;
+    --ok-bg:#E4F2E9; --ok-text:#1E6B3F;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{padding:20px 16px 48px;}
+  #loginView{max-width:420px;margin:0 auto;}
+  #dashView{max-width:1240px;margin:0 auto;}
+  header.app-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 20px;}
+  header.app-header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-0.01em;}
+  #logoutBtn{background:none;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12.5px;color:var(--text-muted);cursor:pointer;font-family:inherit;}
+
+  .dash-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;}
+  @media (min-width:860px){
+    .dash-grid{grid-template-columns:1fr 1.15fr 1fr;}
+  }
+  .dash-col{display:flex;flex-direction:column;gap:16px;}
+  .dash-col .card{margin-bottom:0;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
+  .card h2{font-size:14.5px;font-weight:700;margin:0 0 3px;}
+  .card .sub{font-size:12px;color:var(--text-muted);margin:0 0 14px;}
+
+  label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:5px;margin-top:12px;}
+  label:first-of-type{margin-top:0;}
+  input{width:100%;padding:10px 11px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  button.primary{width:100%;margin-top:16px;padding:12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  button.primary:disabled{opacity:0.6;}
+
+  .msg{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:13px;display:none;}
+  .msg.show{display:block;}
+  .msg.err{background:var(--danger-bg);color:var(--danger-text);}
+
+  .item{border:1px solid var(--border);border-radius:10px;padding:12px 13px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .item:last-child{margin-bottom:0;}
+  .item .who{font-size:13.5px;font-weight:600;margin:0 0 2px;}
+  .item .when{font-size:12px;color:var(--text-muted);margin:0;}
+  .item .actions{display:flex;gap:6px;flex-shrink:0;}
+  .item .actions button{border:1px solid var(--border);background:var(--surface);border-radius:7px;width:34px;height:34px;font-size:15px;cursor:pointer;}
+  .btn-ok{color:var(--ok-text)!important;border-color:#B7DCC4!important;}
+  .btn-no{color:var(--danger-text)!important;border-color:#E9BDB3!important;}
+
+  .empty{font-size:13px;color:var(--text-muted);text-align:center;padding:14px 0;}
+  .tag{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600;}
+  .tag.wait{background:var(--warn-bg);color:var(--warn-text);}
+  .tag.batal{background:var(--danger-bg);color:var(--danger-text);}
+  .tag.tercatat{background:var(--ok-bg);color:var(--ok-text);}
+
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-nav button{background:none;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;font-size:16px;color:var(--text);cursor:pointer;}
+  .cal-nav .month-label{font-size:15px;font-weight:600;}
+  .grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
+  .dow{font-size:10.5px;color:var(--text-muted);text-align:center;font-weight:600;padding-bottom:2px;}
+  .day{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12.5px;background:var(--bg);color:var(--text);cursor:pointer;border:none;font-family:inherit;}
+  .day.selected{box-shadow:inset 0 0 0 1.5px var(--accent);}
+  .day.terisi{background:var(--warn-bg);color:var(--warn-text);font-weight:600;}
+  .day.penuh{background:var(--danger-bg);color:var(--danger-text);font-weight:600;}
+  .day.blank{background:transparent;cursor:default;}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 14px;}
+  .legend span{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-muted);}
+  .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}
+  .sw-kosong{background:var(--bg);border:1px solid var(--border);}
+  .sw-terisi{background:var(--warn-bg);}
+  .sw-penuh{background:var(--danger-bg);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="loginView">
+    <header class="app-header"><h1>Login Admin</h1></header>
+    <div class="card">
+      <h2>Masuk</h2>
+      <p class="sub">Khusus penyelia dinasan. Hubungi admin lain jika belum punya akun.</p>
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="username" />
+        <label for="password">Password</label>
+        <input type="password" id="password" required autocomplete="current-password" />
+        <button type="submit" class="primary" id="loginBtn">Masuk</button>
+        <div class="msg err" id="loginMsg"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="dashView" style="display:none;">
+    <header class="app-header">
+      <h1>Dashboard Penyelia</h1>
+      <button id="logoutBtn">Keluar</button>
+    </header>
+
+    <div class="dash-grid">
+      <div class="dash-col">
+        <div class="card">
+          <h2>Data pegawai</h2>
+          <p class="sub">Tambah pegawai baru & atur kuota cuti tahunan tahun berjalan.</p>
+          <form id="pegawaiForm">
+            <label for="pNama">Nama</label>
+            <input type="text" id="pNama" required placeholder="Nama lengkap" />
+            <label for="pNipp">NIP</label>
+            <input type="text" id="pNipp" placeholder="Nomor induk pegawai" />
+            <label for="pJabatan">Jabatan</label>
+            <input type="text" id="pJabatan" placeholder="Jabatan" />
+            <label for="pKuota">Kuota cuti tahunan (tahun ini)</label>
+            <input type="number" id="pKuota" min="0" placeholder="misal 12" />
+            <button type="submit" class="primary" id="pegawaiBtn">Tambah pegawai</button>
+            <div class="msg" id="pegawaiMsg"></div>
+          </form>
+          <div id="pegawaiTable" style="margin-top:16px;"><div class="empty">Memuat...</div></div>
+        </div>
+      </div>
+
+      <div class="dash-col">
+        <div class="card">
+          <h2>Pengaturan kuota harian</h2>
+          <p class="sub">Berlaku untuk semua tanggal cuti tahunan, sampai diubah lagi.</p>
+          <div id="kuotaInfo" style="margin-bottom:12px;"></div>
+          <label for="kuotaInput">Ubah kuota jadi</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="number" id="kuotaInput" min="0" style="flex:1;" />
+            <button type="button" id="simpanKuotaBtn" style="border:none;border-radius:8px;background:var(--accent);color:#fff;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;">Simpan</button>
+          </div>
+          <div class="msg" id="kuotaMsg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Menunggu approval</h2>
+          <p class="sub">Cuti tahunan yang masih dapat kuota, siapkan keputusan.</p>
+          <div id="pendingList"><div class="empty">Memuat...</div></div>
+        </div>
+
+        <div class="card">
+          <h2>Waiting list</h2>
+          <p class="sub">Kuota tanggal ini sudah penuh saat diajukan. Approve untuk override manual.</p>
+          <div id="waitingList"><div class="empty">Memuat...</div></div>
+        </div>
+
+        <div class="card">
+          <h2>Permintaan pembatalan</h2>
+          <p class="sub">Diajukan pegawai lewat kalender. Setujui untuk membatalkan cuti terkait.</p>
+          <div id="batalList"><div class="empty">Memuat...</div></div>
+        </div>
+      </div>
+
+      <div class="dash-col">
+        <div class="card">
+          <h2>Kalender &amp; kelola cuti</h2>
+          <p class="sub">Ketuk tanggal untuk lihat siapa saja yang cuti, atau batalkan pengajuan.</p>
+          <div class="cal-nav">
+            <button id="prevMonth2" aria-label="Bulan sebelumnya">‹</button>
+            <span class="month-label" id="monthLabel2">-</span>
+            <button id="nextMonth2" aria-label="Bulan berikutnya">›</button>
+          </div>
+          <div class="grid7" id="dowRow2"></div>
+          <div class="grid7" id="calGrid2"></div>
+          <div class="legend" style="margin-top:10px;">
+            <span><i class="sw-kosong"></i>kosong</span>
+            <span><i class="sw-terisi"></i>terisi</span>
+            <span><i class="sw-penuh"></i>penuh</span>
+          </div>
+          <div id="dateDetail" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyACIAwjc0LBjGs3ABPRPBGh3teI0hj0Tkw",
+  authDomain: "web-cuti-64fdf.firebaseapp.com",
+  projectId: "web-cuti-64fdf",
+  storageBucket: "web-cuti-64fdf.firebasestorage.app",
+  messagingSenderId: "130023740290",
+  appId: "1:130023740290:web:ea0d332a269814fdd7759b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const pengajuanRef = collection(db, "pengajuan");
+const permintaanBatalRef = collection(db, "permintaan_batal");
+const pegawaiRef = collection(db, "pegawai");
+const saldoCutiRef = collection(db, "saldo_cuti");
+const pengaturanRef = collection(db, "pengaturan");
+const currentYear = new Date().getFullYear();
+
+const loginView = document.getElementById("loginView");
+const dashView = document.getElementById("dashView");
+const loginForm = document.getElementById("loginForm");
+const loginMsg = document.getElementById("loginMsg");
+const loginBtn = document.getElementById("loginBtn");
+
+loginForm.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  loginBtn.disabled = true;
+  loginMsg.className = "msg";
+  try{
+    await signInWithEmailAndPassword(auth, document.getElementById("email").value.trim(), document.getElementById("password").value);
+  }catch(err){
+    loginMsg.textContent = "Login gagal. Cek email/password.";
+    loginMsg.className = "msg err show";
+  }finally{
+    loginBtn.disabled = false;
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", ()=> signOut(auth));
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    loginView.style.display = "none";
+    dashView.style.display = "block";
+    loadLists();
+    renderAdminCalendar();
+    loadPegawaiTable();
+    loadKuotaSetting();
+  } else {
+    loginView.style.display = "block";
+    dashView.style.display = "none";
+  }
+});
+
+function fmtDate(iso){
+  return new Date(iso + "T00:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"});
+}
+function fmtWaktuAjuan(ts){
+  if(!ts || !ts.toDate) return "";
+  const d = ts.toDate();
+  const tgl = d.toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"});
+  const jam = d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  return `diajukan ${tgl}, ${jam}`;
+}
+
+function renderItems(container, docs, showWaitTag){
+  if(docs.length === 0){
+    container.innerHTML = `<div class="empty">Tidak ada pengajuan.</div>`;
+    return;
+  }
+  container.innerHTML = docs.map(d=>{
+    const data = d.data();
+    return `
+    <div class="item" data-id="${d.id}">
+      <div>
+        <p class="who">${data.nama}</p>
+        <p class="when">${fmtDate(data.tanggal)} ${showWaitTag ? '<span class="tag wait">waiting list</span>' : ''}</p>
+        <p class="when" style="font-size:11px;">${fmtWaktuAjuan(data.createdAt)}</p>
+      </div>
+      <div class="actions">
+        <button class="btn-ok" data-action="approve" title="Approve">✓</button>
+        <button class="btn-no" data-action="reject" title="Reject">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  container.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.closest(".item").dataset.id;
+      const action = btn.dataset.action;
+      const newStatus = action === "approve" ? "approved" : "rejected";
+      btn.closest(".item").style.opacity = "0.5";
+      try{
+        await updateDoc(doc(db,"pengajuan",id), {
+          status: newStatus,
+          diprosesOleh: auth.currentUser.email,
+          diprosesPada: serverTimestamp()
+        });
+        loadLists();
+      }catch(err){
+        alert("Gagal memproses: " + err.message);
+        btn.closest(".item").style.opacity = "1";
+      }
+    });
+  });
+}
+
+function sortByTanggal(docs){
+  return docs.slice().sort((a,b)=> a.data().tanggal.localeCompare(b.data().tanggal));
+}
+
+// ---- Pengaturan kuota harian ----
+async function loadKuotaSetting(){
+  const info = document.getElementById("kuotaInfo");
+  const input = document.getElementById("kuotaInput");
+  try{
+    const snap = await getDocs(query(pengaturanRef, where("__name__","==","kuota")));
+    if(!snap.empty){
+      const data = snap.docs[0].data();
+      input.value = data.kuotaHarian ?? 1;
+      const waktu = fmtWaktuAjuan(data.diprosesPada);
+      info.innerHTML = `<p class="sub" style="margin:0;">Kuota aktif: <strong>${data.kuotaHarian ?? 1} orang/hari</strong>${data.diprosesOleh ? ` · diubah oleh ${data.diprosesOleh}` : ""}${waktu ? ` (${waktu})` : ""}</p>`;
+    } else {
+      input.value = 1;
+      info.innerHTML = `<p class="sub" style="margin:0;">Kuota aktif: <strong>1 orang/hari</strong> (default)</p>`;
+    }
+  }catch(err){
+    info.innerHTML = `<p class="sub" style="margin:0;color:var(--danger-text);">Gagal memuat: ${err.message}</p>`;
+  }
+}
+
+document.getElementById("simpanKuotaBtn").addEventListener("click", async ()=>{
+  const val = document.getElementById("kuotaInput").value;
+  const msg = document.getElementById("kuotaMsg");
+  if(val === "" || Number(val) < 0){
+    msg.textContent = "Masukkan angka kuota yang valid.";
+    msg.className = "msg err show";
+    return;
+  }
+  try{
+    await setDoc(doc(db,"pengaturan","kuota"), {
+      kuotaHarian: Number(val),
+      diprosesOleh: auth.currentUser.email,
+      diprosesPada: serverTimestamp()
+    });
+    msg.className = "msg";
+    loadKuotaSetting();
+    renderAdminCalendar();
+  }catch(err){
+    msg.textContent = "Gagal menyimpan: " + err.message;
+    msg.className = "msg err show";
+  }
+});
+
+// ---- Data pegawai ----
+const pegawaiForm = document.getElementById("pegawaiForm");
+const pegawaiMsg = document.getElementById("pegawaiMsg");
+const pegawaiBtn = document.getElementById("pegawaiBtn");
+
+pegawaiForm.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  pegawaiBtn.disabled = true;
+  pegawaiMsg.className = "msg";
+  const nama = document.getElementById("pNama").value.trim();
+  const nipp = document.getElementById("pNip").value.trim();
+  const jabatan = document.getElementById("pJabatan").value.trim();
+  const kuotaVal = document.getElementById("pKuota").value;
+
+  if(!nama){
+    pegawaiMsg.textContent = "Nama wajib diisi.";
+    pegawaiMsg.className = "msg err show";
+    pegawaiBtn.disabled = false;
+    return;
+  }
+  try{
+    const newDoc = doc(pegawaiRef);
+    await setDoc(newDoc, { nama, nipp, jabatan, createdAt: serverTimestamp() });
+    if(kuotaVal !== ""){
+      await setDoc(doc(db,"saldo_cuti", `${newDoc.id}_${currentYear}`), {
+        pegawaiId: newDoc.id, tahun: currentYear, kuota: Number(kuotaVal)
+      });
+    }
+    pegawaiForm.reset();
+    loadPegawaiTable();
+  }catch(err){
+    pegawaiMsg.textContent = "Gagal menyimpan: " + err.message;
+    pegawaiMsg.className = "msg err show";
+  }finally{
+    pegawaiBtn.disabled = false;
+  }
+});
+
+async function loadPegawaiTable(){
+  const box = document.getElementById("pegawaiTable");
+  try{
+    const pegawaiSnap = await getDocs(pegawaiRef);
+    if(pegawaiSnap.empty){
+      box.innerHTML = `<div class="empty">Belum ada data pegawai.</div>`;
+      return;
+    }
+    const approvedSnap = await getDocs(query(pengajuanRef, where("jenisCuti","==","tahunan"), where("status","==","approved")));
+    const terpakaiMap = {};
+    approvedSnap.forEach(d=>{
+      const data = d.data();
+      if(data.tanggal && data.tanggal.startsWith(String(currentYear)) && data.pegawaiId){
+        terpakaiMap[data.pegawaiId] = (terpakaiMap[data.pegawaiId]||0)+1;
+      }
+    });
+    const saldoSnap = await getDocs(query(saldoCutiRef, where("tahun","==",currentYear)));
+    const kuotaMap = {};
+    saldoSnap.forEach(d=>{ kuotaMap[d.data().pegawaiId] = d.data().kuota; });
+
+    const list = pegawaiSnap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=> a.nama.localeCompare(b.nama));
+
+    box.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap;">
+      <thead><tr style="text-align:left;color:var(--text-muted);font-weight:600;">
+        <th style="padding:7px 6px;">Nama</th><th style="padding:7px 6px;">NIP</th><th style="padding:7px 6px;">Jabatan</th>
+        <th style="padding:7px 6px;text-align:right;">Kuota</th><th style="padding:7px 6px;text-align:right;">Terpakai</th><th style="padding:7px 6px;text-align:right;">Sisa</th><th></th>
+      </tr></thead><tbody>` + list.map(p=>{
+        const kuota = kuotaMap.hasOwnProperty(p.id) ? kuotaMap[p.id] : null;
+        const terpakai = terpakaiMap[p.id] || 0;
+        const sisa = kuota!=null ? (kuota-terpakai) : "-";
+        return `<tr style="border-top:1px solid var(--border);" data-id="${p.id}" data-nama="${p.nama}" data-nip="${p.nipp||''}" data-jabatan="${p.jabatan||''}" data-kuota="${kuota??''}">
+          <td style="padding:7px 6px;">${p.nama}</td>
+          <td style="padding:7px 6px;">${p.nipp||"-"}</td>
+          <td style="padding:7px 6px;">${p.jabatan||"-"}</td>
+          <td style="padding:7px 6px;text-align:right;">${kuota??"-"}</td>
+          <td style="padding:7px 6px;text-align:right;">${terpakai}</td>
+          <td style="padding:7px 6px;text-align:right;font-weight:600;">${sisa}</td>
+          <td style="padding:7px 6px;"><button type="button" class="edit-pegawai" style="border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:4px 8px;font-size:11.5px;cursor:pointer;">Edit</button></td>
+        </tr>`;
+      }).join("") + `</tbody></table></div>`;
+
+    box.querySelectorAll(".edit-pegawai").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const tr = btn.closest("tr");
+        const id = tr.dataset.id;
+        const namaBaru = prompt("Nama:", tr.dataset.nama);
+        if(namaBaru===null) return;
+        const nipBaru = prompt("NIP:", tr.dataset.nip);
+        if(nipBaru===null) return;
+        const jabatanBaru = prompt("Jabatan:", tr.dataset.jabatan);
+        if(jabatanBaru===null) return;
+        const kuotaBaru = prompt(`Kuota cuti tahunan ${currentYear}:`, tr.dataset.kuota);
+        if(kuotaBaru===null) return;
+        try{
+          await updateDoc(doc(db,"pegawai",id), { nama:namaBaru.trim(), nipp:nipBaru.trim(), jabatan:jabatanBaru.trim() });
+          if(kuotaBaru.trim() !== ""){
+            await setDoc(doc(db,"saldo_cuti", `${id}_${currentYear}`), { pegawaiId:id, tahun:currentYear, kuota:Number(kuotaBaru) });
+          }
+          loadPegawaiTable();
+        }catch(err){
+          alert("Gagal menyimpan perubahan: " + err.message);
+        }
+      });
+    });
+  }catch(err){
+    box.innerHTML = `<div class="empty">Gagal memuat: ${err.message}</div>`;
+  }
+}
+
+// ---- Kalender & kelola cuti ----
+const DOW = ["Sen","Sel","Rab","Kam","Jum","Sab","Min"];
+const today = new Date();
+let viewYear2 = today.getFullYear();
+let viewMonth2 = today.getMonth();
+let selectedDate = null;
+let monthDocsCache = {};
+
+function pad(n){ return String(n).padStart(2,"0"); }
+function toISO(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+function monthName(y,m){ return new Date(y,m,1).toLocaleDateString("id-ID",{month:"long",year:"numeric"}); }
+function fmtDateLong(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"}); }
+
+async function getKuotaHarian(){
+  try{
+    const snap = await getDocs(query(collection(db,"pengaturan"), where("__name__","==","kuota")));
+    if(!snap.empty){
+      const v = snap.docs[0].data().kuotaHarian;
+      if(typeof v === "number") return v;
+    }
+  }catch(e){}
+  return 1;
+}
+
+async function loadMonthDocs(y,m){
+  const start = toISO(y,m,1);
+  const lastDay = new Date(y,m+1,0).getDate();
+  const end = toISO(y,m,lastDay);
+  const snap = await getDocs(query(pengajuanRef, where("tanggal",">=",start), where("tanggal","<=",end)));
+  const byDate = {};
+  snap.forEach(d=>{
+    const data = d.data();
+    if(!byDate[data.tanggal]) byDate[data.tanggal] = [];
+    byDate[data.tanggal].push({ id:d.id, ...data });
+  });
+  return { byDate, lastDay };
+}
+
+async function renderAdminCalendar(){
+  document.getElementById("monthLabel2").textContent = monthName(viewYear2,viewMonth2);
+  document.getElementById("dowRow2").innerHTML = DOW.map(d=>`<div class="dow">${d}</div>`).join("");
+  const grid = document.getElementById("calGrid2");
+  grid.innerHTML = "";
+
+  const [{byDate,lastDay}, kuota] = await Promise.all([loadMonthDocs(viewYear2,viewMonth2), getKuotaHarian()]);
+  monthDocsCache = byDate;
+
+  const firstDow = new Date(viewYear2,viewMonth2,1).getDay();
+  const leading = (firstDow + 6) % 7;
+  for(let i=0;i<leading;i++) grid.insertAdjacentHTML("beforeend", `<div class="day blank"></div>`);
+
+  for(let d=1; d<=lastDay; d++){
+    const iso = toISO(viewYear2,viewMonth2,d);
+    const entries = byDate[iso] || [];
+    const activeCount = entries.filter(e=> e.jenisCuti==="tahunan" && (e.status==="menunggu_approval"||e.status==="approved")).length;
+    let cls = "day";
+    if(iso === selectedDate) cls += " selected";
+    if(activeCount>0 && activeCount>=kuota) cls += " penuh";
+    else if(activeCount>0) cls += " terisi";
+    grid.insertAdjacentHTML("beforeend", `<button type="button" class="${cls}" data-date="${iso}">${d}</button>`);
+  }
+
+  grid.querySelectorAll(".day:not(.blank)").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      selectedDate = btn.dataset.date;
+      renderAdminCalendar();
+      showDateDetail(selectedDate);
+    });
+  });
+
+  if(selectedDate) showDateDetail(selectedDate);
+}
+
+function statusLabel(s){
+  if(s==="menunggu_approval") return '<span class="tag wait">menunggu</span>';
+  if(s==="waiting_list") return '<span class="tag wait">waiting list</span>';
+  if(s==="approved") return '<span class="tag tercatat">approved</span>';
+  if(s==="rejected") return '<span class="tag batal">rejected</span>';
+  if(s==="dibatalkan") return '<span class="tag batal">dibatalkan</span>';
+  return '<span class="tag tercatat">tercatat</span>';
+}
+
+function showDateDetail(iso){
+  const entries = monthDocsCache[iso] || [];
+  const box = document.getElementById("dateDetail");
+  if(entries.length===0){
+    box.innerHTML = `<p class="sub" style="margin-top:0;">Tanggal ${fmtDateLong(iso)}: tidak ada pengajuan.</p>`;
+    return;
+  }
+  box.innerHTML = `<p class="sub" style="margin-top:0;">Pengajuan tanggal ${fmtDateLong(iso)}:</p>` + entries.map(e=>{
+    const canCancel = e.status==="menunggu_approval" || e.status==="approved" || e.status==="waiting_list";
+    return `
+    <div class="item" data-id="${e.id}">
+      <div>
+        <p class="who">${e.nama} <span style="font-weight:400;color:var(--text-muted);">· ${e.jenisCuti}</span></p>
+        <p class="when">${statusLabel(e.status)}</p>
+      </div>
+      ${canCancel ? `<div class="actions"><button class="btn-no" data-action="batalkan" title="Batalkan">✕</button></div>` : ""}
+    </div>`;
+  }).join("");
+
+  box.querySelectorAll('button[data-action="batalkan"]').forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.closest(".item").dataset.id;
+      btn.closest(".item").style.opacity = "0.5";
+      try{
+        await updateDoc(doc(db,"pengajuan",id), {
+          status: "dibatalkan",
+          diprosesOleh: auth.currentUser.email,
+          diprosesPada: serverTimestamp()
+        });
+        await renderAdminCalendar();
+        loadLists();
+      }catch(err){
+        alert("Gagal membatalkan: " + err.message);
+        btn.closest(".item").style.opacity = "1";
+      }
+    });
+  });
+}
+
+document.getElementById("prevMonth2").addEventListener("click", ()=>{
+  viewMonth2--; if(viewMonth2<0){ viewMonth2=11; viewYear2--; }
+  selectedDate = null;
+  document.getElementById("dateDetail").innerHTML = "";
+  renderAdminCalendar();
+});
+document.getElementById("nextMonth2").addEventListener("click", ()=>{
+  viewMonth2++; if(viewMonth2>11){ viewMonth2=0; viewYear2++; }
+  selectedDate = null;
+  document.getElementById("dateDetail").innerHTML = "";
+  renderAdminCalendar();
+});
+
+async function loadLists(){
+  try{
+    const pendingSnap = await getDocs(query(pengajuanRef, where("status","==","menunggu_approval")));
+    renderItems(document.getElementById("pendingList"), sortByTanggal(pendingSnap.docs), false);
+  }catch(err){
+    document.getElementById("pendingList").innerHTML = `<div class="empty">Gagal memuat: ${err.message}</div>`;
+  }
+
+  try{
+    const waitingSnap = await getDocs(query(pengajuanRef, where("status","==","waiting_list")));
+    renderItems(document.getElementById("waitingList"), sortByTanggal(waitingSnap.docs), true);
+  }catch(err){
+    document.getElementById("waitingList").innerHTML = `<div class="empty">Gagal memuat: ${err.message}</div>`;
+  }
+
+  await loadBatalRequests();
+}
+
+async function loadBatalRequests(){
+  const box = document.getElementById("batalList");
+  try{
+    const snap = await getDocs(query(permintaanBatalRef, where("status","==","menunggu")));
+    if(snap.empty){
+      box.innerHTML = `<div class="empty">Tidak ada permintaan.</div>`;
+      return;
+    }
+    box.innerHTML = snap.docs.map(d=>{
+      const data = d.data();
+      return `
+      <div class="item" data-id="${d.id}" data-pengajuan="${data.pengajuanId}">
+        <div>
+          <p class="who">${data.nama} <span style="font-weight:400;color:var(--text-muted);">· ${data.jenisCuti}</span></p>
+          <p class="when">${fmtDate(data.tanggal)}</p>
+          <p class="when" style="font-size:11px;">${fmtWaktuAjuan(data.createdAt)}</p>
+        </div>
+        <div class="actions">
+          <button class="btn-ok" data-action="setuju" title="Setujui">✓</button>
+          <button class="btn-no" data-action="tolak" title="Tolak">✕</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    box.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const item = btn.closest(".item");
+        const id = item.dataset.id;
+        const pengajuanId = item.dataset.pengajuan;
+        const setuju = btn.dataset.action === "setuju";
+        item.style.opacity = "0.5";
+        try{
+          if(setuju){
+            await updateDoc(doc(db,"pengajuan",pengajuanId), {
+              status: "dibatalkan",
+              diprosesOleh: auth.currentUser.email,
+              diprosesPada: serverTimestamp()
+            });
+          }
+          await updateDoc(doc(db,"permintaan_batal",id), {
+            status: setuju ? "disetujui" : "ditolak",
+            diprosesOleh: auth.currentUser.email,
+            diprosesPada: serverTimestamp()
+          });
+          loadLists();
+          renderAdminCalendar();
+        }catch(err){
+          alert("Gagal memproses: " + err.message);
+          item.style.opacity = "1";
+        }
+      });
+    });
+  }catch(err){
+    box.innerHTML = `<div class="empty">Gagal memuat: ${err.message}</div>`;
+  }
+}
+</script>
+</body>
+</html>

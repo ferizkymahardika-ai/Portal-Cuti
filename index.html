@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portal Cuti Pegawai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F8;
+    --surface:#FFFFFF;
+    --border:#E2E5EA;
+    --text:#1F2430;
+    --text-muted:#6B7280;
+    --accent:#146464;
+    --accent-dark:#0E4B4B;
+    --warn-bg:#FCEFD3;
+    --warn-text:#8A6116;
+    --danger-bg:#F7DEDA;
+    --danger-text:#A23B2A;
+    --blocked-bg:#E4E6EA;
+    --blocked-text:#6B7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:460px;margin:0 auto;padding:20px 16px 48px;}
+  header.app-header{padding:8px 0 20px;}
+  header.app-header h1{font-size:19px;font-weight:700;margin:0 0 2px;letter-spacing:-0.01em;}
+  header.app-header p{font-size:13px;color:var(--text-muted);margin:0;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 18px 20px;
+    margin-bottom:16px;
+  }
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-nav button{
+    background:none;border:1px solid var(--border);border-radius:8px;
+    width:32px;height:32px;font-size:16px;color:var(--text);cursor:pointer;
+  }
+  .cal-nav .month-label{font-size:15px;font-weight:600;}
+
+  .grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px;}
+  .dow{font-size:10.5px;color:var(--text-muted);text-align:center;font-weight:600;padding-bottom:2px;}
+  .day{
+    aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;background:var(--bg);color:var(--text);position:relative;
+  }
+  .day.today{box-shadow:inset 0 0 0 1.5px var(--accent);}
+  .day.terisi{background:var(--warn-bg);color:var(--warn-text);font-weight:600;}
+  .day.penuh{background:var(--danger-bg);color:var(--danger-text);font-weight:600;}
+  .day.blank{background:transparent;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 14px;}
+  .legend span{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-muted);}
+  .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}
+  .sw-kosong{background:var(--bg);border:1px solid var(--border);}
+  .sw-terisi{background:var(--warn-bg);}
+  .sw-penuh{background:var(--danger-bg);}
+
+  .card h2{font-size:14.5px;font-weight:700;margin:0 0 3px;}
+  .card .sub{font-size:12px;color:var(--text-muted);margin:0 0 14px;}
+
+  label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:5px;margin-top:12px;}
+  label:first-of-type{margin-top:0;}
+  input,select{
+    width:100%;padding:10px 11px;border:1px solid var(--border);border-radius:8px;
+    font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);
+  }
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  button.primary{
+    width:100%;margin-top:16px;padding:12px;border:none;border-radius:8px;
+    background:var(--accent);color:#fff;font-size:14.5px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+  }
+  button.primary:active{background:var(--accent-dark);}
+  button.primary:disabled{opacity:0.6;cursor:default;}
+
+  .msg{
+    margin-top:14px;padding:11px 13px;border-radius:8px;font-size:13px;line-height:1.5;
+    display:none;
+  }
+  .msg.show{display:block;}
+  .msg.ok{background:#E4F2E9;color:#1E6B3F;}
+  .msg.wait{background:var(--warn-bg);color:var(--warn-text);}
+  .msg.err{background:var(--danger-bg);color:var(--danger-text);}
+
+  footer.note{font-size:11.5px;color:var(--text-muted);text-align:center;margin-top:6px;}
+
+  .item{border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .item:last-child{margin-bottom:0;}
+  .item .who{font-size:13.5px;font-weight:600;margin:0 0 2px;}
+  .item .when{font-size:12px;color:var(--text-muted);margin:0;}
+  .item button.cancel-btn{border:1px solid #E9BDB3;background:var(--surface);color:var(--danger-text);border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+  .tag{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600;background:var(--warn-bg);color:var(--warn-text);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-header">
+    <h1>Portal Cuti Pegawai</h1>
+    <p>Cek kalender, lalu ajukan cuti di bawah</p>
+  </header>
+
+  <div class="card">
+    <div class="cal-nav">
+      <button id="prevMonth" aria-label="Bulan sebelumnya">‹</button>
+      <span class="month-label" id="monthLabel">-</span>
+      <button id="nextMonth" aria-label="Bulan berikutnya">›</button>
+    </div>
+    <div class="grid7" id="dowRow"></div>
+    <div class="grid7" id="calGrid"></div>
+    <div class="legend">
+      <span><i class="sw-kosong"></i>kosong</span>
+      <span><i class="sw-terisi"></i>terisi</span>
+      <span><i class="sw-penuh"></i>penuh</span>
+    </div>
+    <div id="dateDetail" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ajukan cuti</h2>
+    <p class="sub">Cuti tahunan tunggu approval admin. Cuti sakit &amp; penting langsung tercatat.</p>
+    <form id="cutiForm">
+      <label for="nama">Nama pegawai</label>
+      <select id="nama" required>
+        <option value="">Memuat data pegawai...</option>
+      </select>
+
+      <label for="jenis">Jenis cuti</label>
+      <select id="jenis">
+        <option value="tahunan">Cuti tahunan</option>
+        <option value="sakit">Cuti sakit</option>
+        <option value="penting">Cuti penting</option>
+      </select>
+
+      <label for="tanggal">Tanggal</label>
+      <input type="date" id="tanggal" required />
+
+      <button type="submit" class="primary" id="submitBtn">Ajukan cuti</button>
+      <div class="msg" id="formMsg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Data pegawai</h2>
+    <p class="sub">Kuota &amp; sisa cuti tahunan tahun berjalan. Hanya bisa dilihat di sini — edit lewat halaman admin.</p>
+    <div id="pegawaiTable"><div class="empty" style="font-size:13px;color:var(--text-muted);text-align:center;padding:10px 0;">Memuat...</div></div>
+  </div>
+
+  <footer class="note">kalender · pengajuan cuti · data pegawai</footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyACIAwjc0LBjGs3ABPRPBGh3teI0hj0Tkw",
+  authDomain: "web-cuti-64fdf.firebaseapp.com",
+  projectId: "web-cuti-64fdf",
+  storageBucket: "web-cuti-64fdf.firebasestorage.app",
+  messagingSenderId: "130023740290",
+  appId: "1:130023740290:web:ea0d332a269814fdd7759b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const pengajuanRef = collection(db, "pengajuan");
+const pengaturanRef = collection(db, "pengaturan");
+
+const DOW = ["Sen","Sel","Rab","Kam","Jum","Sab","Min"];
+let viewYear, viewMonth; // viewMonth: 0-11
+const today = new Date();
+viewYear = today.getFullYear();
+viewMonth = today.getMonth();
+
+function pad(n){ return String(n).padStart(2,"0"); }
+function toISO(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+function monthName(y,m){
+  return new Date(y,m,1).toLocaleDateString("id-ID",{month:"long",year:"numeric"});
+}
+
+async function getKuotaHarian(){
+  try{
+    const snap = await getDocs(query(pengaturanRef, where("__name__","==","kuota")));
+    if(!snap.empty){
+      const v = snap.docs[0].data().kuotaHarian;
+      if(typeof v === "number") return v;
+    }
+  }catch(e){ /* fallback ke default */ }
+  return 1;
+}
+
+async function countTahunan(dateISO){
+  const q = query(pengajuanRef, where("tanggal","==",dateISO));
+  const snap = await getDocs(q);
+  let count = 0;
+  snap.forEach(doc=>{
+    const d = doc.data();
+    if(d.jenisCuti === "tahunan" && (d.status === "menunggu_approval" || d.status === "approved")){
+      count++;
+    }
+  });
+  return count;
+}
+
+let selectedDate = null;
+let monthDocsCache = {};
+const permintaanBatalRef = collection(db, "permintaan_batal");
+
+async function loadMonthDocs(y,m){
+  const start = toISO(y,m,1);
+  const lastDay = new Date(y,m+1,0).getDate();
+  const end = toISO(y,m,lastDay);
+  const q = query(pengajuanRef, where("tanggal",">=",start), where("tanggal","<=",end));
+  const snap = await getDocs(q);
+  const byDate = {};
+  snap.forEach(d=>{
+    const data = d.data();
+    if(!byDate[data.tanggal]) byDate[data.tanggal] = [];
+    byDate[data.tanggal].push({ id:d.id, ...data });
+  });
+  return { byDate, lastDay };
+}
+
+async function renderCalendar(){
+  document.getElementById("monthLabel").textContent = monthName(viewYear,viewMonth);
+  const dowRow = document.getElementById("dowRow");
+  dowRow.innerHTML = DOW.map(d=>`<div class="dow">${d}</div>`).join("");
+
+  const grid = document.getElementById("calGrid");
+  grid.innerHTML = "";
+
+  const [{byDate,lastDay}, kuota] = await Promise.all([
+    loadMonthDocs(viewYear,viewMonth),
+    getKuotaHarian()
+  ]);
+  monthDocsCache = byDate;
+
+  const firstDow = new Date(viewYear,viewMonth,1).getDay(); // 0=Min
+  const leading = (firstDow + 6) % 7; // geser supaya Senin=0
+
+  for(let i=0;i<leading;i++){
+    grid.insertAdjacentHTML("beforeend", `<div class="day blank"></div>`);
+  }
+  const isToday = (d)=> viewYear===today.getFullYear() && viewMonth===today.getMonth() && d===today.getDate();
+
+  for(let d=1; d<=lastDay; d++){
+    const iso = toISO(viewYear,viewMonth,d);
+    const entries = byDate[iso] || [];
+    const activeCount = entries.filter(e=> e.jenisCuti==="tahunan" && (e.status==="menunggu_approval"||e.status==="approved")).length;
+    let cls = "day";
+    if(isToday(d)) cls += " today";
+    if(iso === selectedDate) cls += " terisi";
+    if(activeCount>0 && activeCount>=kuota) cls += " penuh";
+    else if(activeCount>0) cls += " terisi";
+    grid.insertAdjacentHTML("beforeend", `<button type="button" class="${cls}" data-date="${iso}" style="border:none;padding:0;font-family:inherit;cursor:pointer;">${d}</button>`);
+  }
+
+  grid.querySelectorAll("button.day, button[data-date]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      selectedDate = btn.dataset.date;
+      showDateDetail(selectedDate);
+    });
+  });
+
+  if(selectedDate) showDateDetail(selectedDate);
+}
+
+function fmtDateLong(iso){
+  return new Date(iso+"T00:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"});
+}
+
+function showDateDetail(iso){
+  const entries = (monthDocsCache[iso]||[]).filter(e=> e.status !== "dibatalkan" && e.status !== "rejected");
+  const box = document.getElementById("dateDetail");
+  if(entries.length===0){
+    box.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin:0;">Tanggal ${fmtDateLong(iso)}: tidak ada yang cuti.</p>`;
+    return;
+  }
+  box.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin:0 0 8px;">Cuti tanggal ${fmtDateLong(iso)}:</p>` + entries.map(e=>`
+    <div class="item" data-id="${e.id}" data-nama="${e.nama}" data-jenis="${e.jenisCuti}" data-tanggal="${e.tanggal}">
+      <div>
+        <p class="who">${e.nama}</p>
+        <p class="when">${e.jenisCuti}${e.status==='menunggu_approval' ? ' · <span class="tag">menunggu</span>' : ''}${e.status==='waiting_list' ? ' · <span class="tag">waiting list</span>' : ''}</p>
+      </div>
+      <button type="button" class="cancel-btn" data-action="batal">Ajukan batal</button>
+    </div>`).join("");
+
+  box.querySelectorAll('button[data-action="batal"]').forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const item = btn.closest(".item");
+      if(!confirm(`Ajukan pembatalan cuti untuk ${item.dataset.nama} tanggal ${fmtDateLong(item.dataset.tanggal)}?`)) return;
+      btn.disabled = true;
+      btn.textContent = "Mengirim...";
+      try{
+        await addDoc(permintaanBatalRef, {
+          pengajuanId: item.dataset.id,
+          nama: item.dataset.nama,
+          jenisCuti: item.dataset.jenis,
+          tanggal: item.dataset.tanggal,
+          status: "menunggu",
+          createdAt: serverTimestamp()
+        });
+        btn.textContent = "Terkirim ✓";
+      }catch(err){
+        alert("Gagal mengirim permintaan: " + err.message);
+        btn.disabled = false;
+        btn.textContent = "Ajukan batal";
+      }
+    });
+  });
+}
+
+document.getElementById("prevMonth").addEventListener("click", ()=>{
+  viewMonth--; if(viewMonth<0){ viewMonth=11; viewYear--; }
+  selectedDate = null;
+  document.getElementById("dateDetail").innerHTML = "";
+  renderCalendar();
+});
+document.getElementById("nextMonth").addEventListener("click", ()=>{
+  viewMonth++; if(viewMonth>11){ viewMonth=0; viewYear++; }
+  selectedDate = null;
+  document.getElementById("dateDetail").innerHTML = "";
+  renderCalendar();
+});
+
+const form = document.getElementById("cutiForm");
+const msgBox = document.getElementById("formMsg");
+const submitBtn = document.getElementById("submitBtn");
+
+function showMsg(text, kind){
+  msgBox.textContent = text;
+  msgBox.className = `msg show ${kind}`;
+}
+
+form.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  submitBtn.disabled = true;
+  msgBox.className = "msg";
+
+  const namaSelect = document.getElementById("nama");
+  const pegawaiId = namaSelect.value;
+  const nama = namaSelect.options[namaSelect.selectedIndex] ? namaSelect.options[namaSelect.selectedIndex].text : "";
+  const jenis = document.getElementById("jenis").value;
+  const tanggal = document.getElementById("tanggal").value;
+
+  if(!pegawaiId || !tanggal){
+    showMsg("Pilih nama pegawai dan tanggal.", "err");
+    submitBtn.disabled = false;
+    return;
+  }
+
+  try{
+    let status = "tercatat";
+    if(jenis === "tahunan"){
+      const kuota = await getKuotaHarian();
+      const count = await countTahunan(tanggal);
+      status = count < kuota ? "menunggu_approval" : "waiting_list";
+    }
+
+    await addDoc(pengajuanRef, {
+      pegawaiId, nama, jenisCuti: jenis, tanggal, status,
+      createdAt: serverTimestamp()
+    });
+
+    if(status === "menunggu_approval"){
+      showMsg("Pengajuan tersimpan, menunggu approval admin.", "ok");
+    } else if(status === "waiting_list"){
+      showMsg("Kuota tanggal ini penuh. Pengajuan masuk waiting list, admin akan menghubungi.", "wait");
+    } else {
+      showMsg("Cuti tercatat.", "ok");
+    }
+
+    form.reset();
+    if(new Date(tanggal).getFullYear()===viewYear && new Date(tanggal).getMonth()===viewMonth){
+      renderCalendar();
+    }
+    loadPegawaiTable();
+  }catch(err){
+    showMsg("Gagal mengirim pengajuan. Coba lagi. (" + err.message + ")", "err");
+  }finally{
+    submitBtn.disabled = false;
+  }
+});
+
+// ---- Data pegawai (master + kuota tahunan) ----
+const pegawaiRef = collection(db, "pegawai");
+const saldoCutiRef = collection(db, "saldo_cuti");
+const currentYear = today.getFullYear();
+
+async function loadPegawaiDropdown(){
+  const sel = document.getElementById("nama");
+  try{
+    const snap = await getDocs(pegawaiRef);
+    if(snap.empty){
+      sel.innerHTML = `<option value="">Belum ada data pegawai</option>`;
+      return;
+    }
+    sel.innerHTML = `<option value="">Pilih pegawai</option>` + snap.docs
+      .map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b)=> a.nama.localeCompare(b.nama))
+      .map(p=>`<option value="${p.id}">${p.nama}</option>`).join("");
+  }catch(err){
+    sel.innerHTML = `<option value="">Gagal memuat pegawai</option>`;
+  }
+}
+
+async function loadPegawaiTable(){
+  const box = document.getElementById("pegawaiTable");
+  try{
+    const pegawaiSnap = await getDocs(pegawaiRef);
+    if(pegawaiSnap.empty){
+      box.innerHTML = `<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:10px 0;">Belum ada data pegawai.</p>`;
+      return;
+    }
+    const approvedSnap = await getDocs(query(pengajuanRef, where("jenisCuti","==","tahunan"), where("status","==","approved")));
+    const terpakaiMap = {};
+    approvedSnap.forEach(d=>{
+      const data = d.data();
+      if(data.tanggal && data.tanggal.startsWith(String(currentYear)) && data.pegawaiId){
+        terpakaiMap[data.pegawaiId] = (terpakaiMap[data.pegawaiId]||0)+1;
+      }
+    });
+    const saldoSnap = await getDocs(query(saldoCutiRef, where("tahun","==",currentYear)));
+    const kuotaMap = {};
+    saldoSnap.forEach(d=>{ kuotaMap[d.data().pegawaiId] = d.data().kuota; });
+
+    const rows = pegawaiSnap.docs
+      .map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b)=> a.nama.localeCompare(b.nama))
+      .map(p=>{
+        const kuota = kuotaMap.hasOwnProperty(p.id) ? kuotaMap[p.id] : null;
+        const terpakai = terpakaiMap[p.id] || 0;
+        const sisa = kuota!=null ? (kuota - terpakai) : "-";
+        return `<tr style="border-top:1px solid var(--border);">
+          <td style="padding:7px 6px;">${p.nama}</td>
+          <td style="padding:7px 6px;">${p.nipp||"-"}</td>
+          <td style="padding:7px 6px;">${p.jabatan||"-"}</td>
+          <td style="padding:7px 6px;text-align:right;">${kuota??"-"}</td>
+          <td style="padding:7px 6px;text-align:right;">${terpakai}</td>
+          <td style="padding:7px 6px;text-align:right;font-weight:600;">${sisa}</td>
+        </tr>`;
+      }).join("");
+
+    box.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap;">
+      <thead><tr style="text-align:left;color:var(--text-muted);font-weight:600;">
+        <th style="padding:7px 6px;">Nama</th><th style="padding:7px 6px;">NIP</th><th style="padding:7px 6px;">Jabatan</th>
+        <th style="padding:7px 6px;text-align:right;">Kuota</th><th style="padding:7px 6px;text-align:right;">Terpakai</th><th style="padding:7px 6px;text-align:right;">Sisa ${currentYear}</th>
+      </tr></thead><tbody>${rows}</tbody></table></div>`;
+  }catch(err){
+    box.innerHTML = `<p style="font-size:13px;color:var(--danger-text);">Gagal memuat: ${err.message}</p>`;
+  }
+}
+
+renderCalendar();
+loadPegawaiDropdown();
+loadPegawaiTable();
+</script>
+</body>
+</html>
