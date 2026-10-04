@@ -108,9 +108,12 @@
 </head>
 <body>
 <div class="wrap">
-  <header class="app-header">
-    <h1>Portal Cuti Pegawai</h1>
-    <p>Cek kalender, lalu ajukan cuti di bawah</p>
+<header class="app-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+      <h1>Portal Cuti Pegawai</h1>
+      <p>Cek kalender, lalu ajukan cuti di bawah</p>
+    </div>
+    <a href="admin.html" class="nav-btn" style="padding:7px 12px;font-size:12.5px;margin:0;">Admin</a>
   </header>
 
   <div class="card">
@@ -471,6 +474,6 @@ renderCalendar();
 loadPegawaiDropdown();
 loadPegawaiTable();
 </script>
-<footer class="note">kalender · pengajuan cuti · data pegawai · <a href="admin.html">Admin</a></footer>
+<footer class="note">kalender · pengajuan cuti · data pegawai </footer>
 </body>
 </html>
