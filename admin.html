@@ -23,6 +23,9 @@
   #dashView{max-width:1240px;margin:0 auto;}
   header.app-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 20px;}
   header.app-header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-0.01em;}
+  .hdr-actions{display:flex;gap:8px;align-items:center;}
+  .nav-btn{display:inline-block;text-decoration:none;padding:7px 12px;border:1px solid var(--accent);border-radius:8px;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--surface);font-family:inherit;}
+  .nav-btn:active{background:var(--accent);color:#fff;}
   #logoutBtn{background:none;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12.5px;color:var(--text-muted);cursor:pointer;font-family:inherit;}
 
   .dash-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;}
@@ -40,6 +43,7 @@
   label:first-of-type{margin-top:0;}
   input{width:100%;padding:10px 11px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;}
   input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  select.st-select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;background:var(--surface);color:var(--text);}
 
   button.primary{width:100%;margin-top:16px;padding:12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;}
   button.primary:disabled{opacity:0.6;}
@@ -85,7 +89,10 @@
 <div class="wrap">
 
   <div id="loginView">
-    <header class="app-header"><h1>Login Admin</h1></header>
+    <header class="app-header">
+      <h1>Login Admin</h1>
+      <a href="index.html" class="nav-btn">← Portal cuti</a>
+    </header>
     <div class="card">
       <h2>Masuk</h2>
       <p class="sub">Khusus penyelia dinasan. Hubungi admin lain jika belum punya akun.</p>
@@ -103,7 +110,10 @@
   <div id="dashView" style="display:none;">
     <header class="app-header">
       <h1>Dashboard Penyelia</h1>
-      <button id="logoutBtn">Keluar</button>
+      <div class="hdr-actions">
+        <a href="index.html" class="nav-btn">← Portal cuti</a>
+        <button id="logoutBtn">Keluar</button>
+      </div>
     </header>
 
     <div class="dash-grid">
@@ -180,9 +190,36 @@
       </div>
     </div>
 
+    <!-- ===== Statistik Cuti (hanya tampil setelah login) ===== -->
+    <div class="card" id="statCuti" style="margin-top:16px;">
+      <h2>Statistik cuti</h2>
+      <p class="sub">Jumlah cuti per bulan dan pegawai yang paling sering cuti.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <select id="stJenis" class="st-select">
+          <option value="tahunan">Cuti tahunan</option>
+          <option value="sakit">Cuti sakit</option>
+          <option value="penting">Cuti penting</option>
+        </select>
+        <select id="stTahun" class="st-select"></select>
+        <select id="stBulan" class="st-select"></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr;gap:18px;">
+        <div>
+          <h3 style="font-size:13.5px;margin:0 0 6px;">Jumlah cuti per bulan</h3>
+          <div style="position:relative;height:240px;"><canvas id="chBulanan"></canvas></div>
+        </div>
+        <div>
+          <h3 id="stJudul" style="font-size:13.5px;margin:0 0 6px;"></h3>
+          <div id="wrapPeringkat" style="position:relative;height:160px;"><canvas id="chPeringkat"></canvas></div>
+        </div>
+      </div>
+      <p id="stInfo" style="font-size:12px;color:var(--text-muted);margin:10px 0 0;"></p>
+    </div>
+
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
@@ -241,6 +278,7 @@ onAuthStateChanged(auth, (user)=>{
     renderAdminCalendar();
     loadPegawaiTable();
     loadKuotaSetting();
+    muatStatistik();
   } else {
     loginView.style.display = "block";
     dashView.style.display = "none";
@@ -292,6 +330,7 @@ function renderItems(container, docs, showWaitTag){
           diprosesPada: serverTimestamp()
         });
         loadLists();
+        muatStatistik();
       }catch(err){
         alert("Gagal memproses: " + err.message);
         btn.closest(".item").style.opacity = "1";
@@ -357,7 +396,7 @@ pegawaiForm.addEventListener("submit", async (e)=>{
   pegawaiBtn.disabled = true;
   pegawaiMsg.className = "msg";
   const nama = document.getElementById("pNama").value.trim();
-  const nipp = document.getElementById("pNip").value.trim();
+  const nipp = document.getElementById("pNipp").value.trim();
   const jabatan = document.getElementById("pJabatan").value.trim();
   const kuotaVal = document.getElementById("pKuota").value;
 
@@ -567,6 +606,7 @@ function showDateDetail(iso){
         });
         await renderAdminCalendar();
         loadLists();
+        muatStatistik();
       }catch(err){
         alert("Gagal membatalkan: " + err.message);
         btn.closest(".item").style.opacity = "1";
@@ -652,6 +692,7 @@ async function loadBatalRequests(){
           });
           loadLists();
           renderAdminCalendar();
+          muatStatistik();
         }catch(err){
           alert("Gagal memproses: " + err.message);
           item.style.opacity = "1";
@@ -662,105 +703,73 @@ async function loadBatalRequests(){
     box.innerHTML = `<div class="empty">Gagal memuat: ${err.message}</div>`;
   }
 }
-</script>
 
-  <!-- ===== Statistik Cuti ===== -->
-<div id="statCuti" style="max-width:900px;margin:24px auto;padding:18px;background:#fff;border:1px solid #E2E5EA;border-radius:12px;">
-  <h2 style="margin:0 0 12px;font-size:16px;">Statistik cuti</h2>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-    <select id="stJenis">
-      <option value="tahunan">Cuti tahunan</option>
-      <option value="sakit">Cuti sakit</option>
-      <option value="penting">Cuti penting</option>
-    </select>
-    <select id="stTahun"></select>
-    <select id="stBulan"></select>
-  </div>
-  <h3 style="font-size:13.5px;margin:0 0 6px;">Jumlah cuti per bulan</h3>
-  <div style="position:relative;height:240px;"><canvas id="chBulanan"></canvas></div>
-  <h3 id="stJudul" style="font-size:13.5px;margin:18px 0 6px;"></h3>
-  <div style="position:relative;height:260px;"><canvas id="chPeringkat"></canvas></div>
-  <p id="stInfo" style="font-size:12px;color:#6B7280;margin:10px 0 0;"></p>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-const app = initializeApp({
-  apiKey: "AIzaSyACIAwjc0LBjGs3ABPRPBGh3teI0hj0Tkw",
-  authDomain: "web-cuti-64fdf.firebaseapp.com",
-  projectId: "web-cuti-64fdf",
-  storageBucket: "web-cuti-64fdf.firebasestorage.app",
-  messagingSenderId: "130023740290",
-  appId: "1:130023740290:web:ea0d332a269814fdd7759b"
-}, "statistik");
-const db = getFirestore(app);
-
+// ---- Statistik cuti ----
 const BLN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-const selJenis = document.getElementById("stJenis");
-const selTahun = document.getElementById("stTahun");
-const selBulan = document.getElementById("stBulan");
-const info = document.getElementById("stInfo");
-const now = new Date();
+const stJenis = document.getElementById("stJenis");
+const stTahun = document.getElementById("stTahun");
+const stBulan = document.getElementById("stBulan");
+const stInfo = document.getElementById("stInfo");
+let stData = [], chBulanan = null, chPeringkat = null;
 
-for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++)
-  selTahun.add(new Option(y, y, false, y === now.getFullYear()));
-BLN.forEach((n, i) => selBulan.add(new Option(n, i, false, i === now.getMonth())));
+for(let y = currentYear - 2; y <= currentYear + 1; y++)
+  stTahun.add(new Option(y, y, false, y === currentYear));
+BLN.forEach((n,i)=> stBulan.add(new Option(n, i, false, i === new Date().getMonth())));
 
-let dataTahun = [], chBulanan, chPeringkat;
-
-async function muat() {
-  const y = selTahun.value;
-  info.textContent = "Memuat...";
-  try {
-    const snap = await getDocs(query(collection(db, "pengajuan"),
-      where("tanggal", ">=", `${y}-01-01`), where("tanggal", "<=", `${y}-12-31`)));
-    dataTahun = snap.docs.map(d => d.data())
-      .filter(d => d.status === "approved" || d.status === "tercatat");
-    info.textContent = "Dihitung dari cuti yang sudah disetujui/tercatat.";
-    gambar();
-  } catch (e) {
-    info.textContent = "Gagal memuat data: " + e.message;
+async function muatStatistik(){
+  const y = stTahun.value;
+  stInfo.textContent = "Memuat...";
+  try{
+    const snap = await getDocs(query(pengajuanRef,
+      where("tanggal",">=",`${y}-01-01`), where("tanggal","<=",`${y}-12-31`)));
+    stData = snap.docs.map(d=>d.data())
+      .filter(d=> d.status==="approved" || d.status==="tercatat");
+    stInfo.textContent = "Dihitung dari cuti yang sudah disetujui/tercatat. Satuan: jumlah hari cuti.";
+    gambarStatistik();
+  }catch(err){
+    stInfo.textContent = "Gagal memuat data: " + err.message;
   }
 }
 
-function gambar() {
-  const jenis = selJenis.value, bulan = Number(selBulan.value);
+function gambarStatistik(){
+  if(typeof Chart === "undefined"){
+    stInfo.textContent = "Library grafik gagal dimuat. Cek koneksi internet lalu muat ulang halaman.";
+    return;
+  }
+  const jenis = stJenis.value, bulan = Number(stBulan.value);
   const perBulan = Array(12).fill(0), perOrang = {};
-  dataTahun.filter(d => d.jenisCuti === jenis).forEach(d => {
-    const m = Number(d.tanggal.slice(5, 7)) - 1;
+  stData.filter(d=> d.jenisCuti === jenis).forEach(d=>{
+    const m = Number(d.tanggal.slice(5,7)) - 1;
     perBulan[m]++;
-    if (m === bulan) perOrang[d.nama] = (perOrang[d.nama] || 0) + 1;
+    if(m === bulan) perOrang[d.nama] = (perOrang[d.nama]||0) + 1;
   });
-  const top = Object.entries(perOrang).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const top = Object.entries(perOrang).sort((a,b)=> b[1]-a[1]).slice(0,10);
+  document.getElementById("wrapPeringkat").style.height = (Math.max(top.length,1) * 44 + 50) + "px";
 
-  if (chBulanan) chBulanan.destroy();
+  if(chBulanan) chBulanan.destroy();
   chBulanan = new Chart(document.getElementById("chBulanan"), {
-    type: "bar",
-    data: { labels: BLN, datasets: [{ label: "Jumlah cuti", data: perBulan, backgroundColor: "#146464" }] },
-    options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    type:"bar",
+    data:{ labels:BLN, datasets:[{ label:"Jumlah cuti", data:perBulan, backgroundColor:"#146464", barThickness:18, borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ precision:0 }, grid:{ lineWidth:0.5, color:"#E2E5EA" }, border:{ width:0.5 } }, x:{ grid:{ display:false }, border:{ width:0.5 } } } }
   });
 
   document.getElementById("stJudul").textContent =
-    `Paling sering cuti, ${BLN[bulan]} ${selTahun.value}` + (top.length ? "" : " (belum ada data)");
-  if (chPeringkat) chPeringkat.destroy();
+    `Paling sering cuti, ${BLN[bulan]} ${stTahun.value}` + (top.length ? "" : " (belum ada data)");
+  if(chPeringkat) chPeringkat.destroy();
   chPeringkat = new Chart(document.getElementById("chPeringkat"), {
-    type: "bar",
-    data: { labels: top.map(t => t[0]), datasets: [{ label: "Hari cuti", data: top.map(t => t[1]), backgroundColor: "#8A6116" }] },
-    options: { indexAxis: "y", responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    type:"bar",
+    data:{ labels:top.map(t=>t[0]), datasets:[{ label:"Hari cuti", data:top.map(t=>t[1]), backgroundColor:"#8A6116", barThickness:12, borderWidth:0 }] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ x:{ beginAtZero:true, ticks:{ precision:0 }, grid:{ lineWidth:0.5, color:"#E2E5EA" }, border:{ width:0.5 } }, y:{ grid:{ display:false }, border:{ width:0.5 } } } }
   });
 }
 
-selTahun.addEventListener("change", muat);
-selJenis.addEventListener("change", gambar);
-selBulan.addEventListener("change", gambar);
-muat();
+stTahun.addEventListener("change", muatStatistik);
+stJenis.addEventListener("change", gambarStatistik);
+stBulan.addEventListener("change", gambarStatistik);
 </script>
 </body>
 </html>
